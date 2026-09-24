@@ -1,6 +1,5 @@
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -9,5 +8,15 @@ generator client {
 
 model booking {
   id    Int     @id @default(autoincrement())
-  
+  userid  Int
+  hotelid Int
+  createdat DateTime @default(now())
+  updatedat DateTime @updatedAt
+  bookingAmount Int
+  status bookingstatus
+}
+enum bookingstatus{
+  pending
+  comfirmed
+  cencelled
 }
