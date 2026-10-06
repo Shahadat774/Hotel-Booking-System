@@ -4,7 +4,7 @@ import * as z from "zod";
 const Booking = z.object({
   userid: z.number(),
   hotelid: z.number(),
-  bookingAmount: z.number(),
+  bookingAmount: z.number().positive(),
   status : z.string() 
 });
 export const Bookingvalidate=async(req:Request,res:Response,next:NextFunction)=>{
