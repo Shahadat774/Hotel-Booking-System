@@ -18,6 +18,6 @@ model booking {
 }
 enum bookingstatus{
   pending
-  comfirmed
-  cencelled
+  confirmed
+  cancelled
 }

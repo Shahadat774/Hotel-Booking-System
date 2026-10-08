@@ -14,9 +14,20 @@ export const FinalBook=async(bookingid:number,uuid:string )=>{
     id: bookingid, 
   },
   data: {
-    status: 'comfirmed',
+    status: 'confirmed',
     uuid : uuid,
   },
 });
 return updatebooking;
+}
+export const Getuuid=async(bookingid:number)=>{
+  const resultuuid= await prisma.booking.findUnique({
+  where: {
+    id: bookingid,
+  },
+  select: {
+    uuid: true,
+  },    
+  })
+ return resultuuid
 }
