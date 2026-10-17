@@ -1,15 +1,30 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../prisma/Client.js';
+import { redlock } from '../config/redis.config.js';
 
 export const CreatBooking=async(bookingdata:Prisma.bookingCreateInput)=>{  
-const res=await prisma.booking.create({
-    data:bookingdata
- })
- return res
+  const resource = `lock:booking:${bookingdata.hotelid}`;
+  const ttl = 5000; 
+
+  let lock;
+  try {
+    lock = await redlock.acquire([resource], ttl);
+    
+    const res = await prisma.booking.create({
+      data: bookingdata,
+    });
+    return res;
+  } catch (error) {
+    throw error;
+  } finally {
+    if (lock) {
+      await lock.unlock();
+    }
+  }
 }
 
-export const FinalBook=async(bookingid:number,uuid:string )=>{
-    const updatebooking = await prisma.booking.update({
+export const FinalBook=async(bookingid:number,uuid:string,tx:any )=>{
+    const updatebooking = await tx.booking.update({
   where: {
     id: bookingid, 
   },
@@ -20,14 +35,14 @@ export const FinalBook=async(bookingid:number,uuid:string )=>{
 });
 return updatebooking;
 }
-export const Getuuid=async(bookingid:number)=>{
-  const resultuuid= await prisma.booking.findUnique({
-  where: {
-    id: bookingid,
-  },
-  select: {
-    uuid: true,
-  },    
-  })
- return resultuuid
+export const Getuuid=async(bookingid:number,tx:any)=>{
+  const results = await tx.$queryRaw<any[]>`
+    SELECT uuid FROM "Booking" 
+    WHERE id = ${bookingid} 
+    FOR UPDATE
+  `;
+
+  const resultuuid = results[0];
+  console.log(resultuuid)
+ return resultuuid ? resultuuid.uuid : null;
 }
