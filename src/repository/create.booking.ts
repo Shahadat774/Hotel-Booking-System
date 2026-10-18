@@ -1,25 +1,20 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../prisma/Client.js';
-import { redlock } from '../config/redis.config.js';
+import { acquireLock } from '../config/redis.config.js';
 
 export const CreatBooking=async(bookingdata:Prisma.bookingCreateInput)=>{  
-  const resource = `lock:booking:${bookingdata.hotelid}`;
-  const ttl = 5000; 
+  const hotelid = bookingdata.hotelid as number;
+  const lockKey = `lock:booking:hotel:${hotelid}`;
 
-  let lock;
+  const release = await acquireLock(lockKey, 500000);
+  if (!release) {
+    throw new Error('This hotel is being booked by someone else, please try again');
+  }
+
   try {
-    lock = await redlock.acquire([resource], ttl);
-    
-    const res = await prisma.booking.create({
-      data: bookingdata,
-    });
-    return res;
-  } catch (error) {
-    throw error;
+    return await prisma.booking.create({ data: bookingdata });
   } finally {
-    if (lock) {
-      await lock.unlock();
-    }
+    await release();
   }
 }
 

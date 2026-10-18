@@ -4,9 +4,10 @@ import Genarateuuid from "../utils/genarate.uuid.js";
 import { FinalBook } from "../repository/create.booking.js";
 import { prisma } from "../prisma/Client.js";
 
-export function PendingBookinglogic(inputdata:Prisma.bookingCreateInput){
+export async function PendingBookinglogic(inputdata:Prisma.bookingCreateInput){
    const idpkey:string =Genarateuuid()
-   return (CreatBooking(inputdata),idpkey)
+   const bookresult=await CreatBooking(inputdata)
+   return {bookresult,idpkey}
 }
 
 export async function FinalBooking(bookingid: number, uuid: string) {
